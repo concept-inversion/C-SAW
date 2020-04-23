@@ -19,11 +19,13 @@ using namespace std;
 
 
 __global__ void
-check(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, int N, int overN, int NORMALIZE, int bias, int bitflag, int hash, int cache)
+check(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, int FrontierSize, int NeighborSize)
 // check(graph,curandState *gs,sample,*neigh_l,n_blocks,*d_seed,n_threads,hash,bitmap)
 {
 	float prefix_time,local_d_time,global_d_time;
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int hash=1, cache=0, bitflag=1, NORMALIZE=1;
+
 	int warpId = tid/32;
 	int warpTid=threadIdx.x%32;
     clock_t start_time,stop_time;
@@ -61,12 +63,12 @@ check(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, int N, 
 		int len= get_neighbors(&G,source,&S->wvar[warpId],VertCount);
 			
 			if(NORMALIZE==0){
-				select(&S->wvar[warpId],&S->cache,N,N,local_state, &G,S->count.colcount, source,S->max,bitflag,cache);
+				select(&S->wvar[warpId],&S->cache,NeighborSize,1,local_state, &G,S->count.colcount, source,S->max,bitflag,cache);
 			}
 			else{
-				heur_normalize(&S->wvar[warpId],&S->cache,N,overN,local_state, &G,S->count.colcount, source, S->max,bitflag,cache);
+				heur_normalize(&S->wvar[warpId],&S->cache,NeighborSize,1,local_state, &G,S->count.colcount, source, S->max,bitflag,cache);
 				}
-		frontier(&G,S,warpId,SampleID,N,source,sourceIndex, hash);
+		frontier(&G,S,warpId,SampleID,NeighborSize,source,sourceIndex, hash);
 		
 		__syncwarp();
 		 if(warpTid==0){
@@ -81,16 +83,13 @@ check(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, int N, 
 
 int main(int args, char **argv)
 {
-
-	if(args!=11){std::cout<<"Wrong input\n"; return -1;}
+	printf("A: %d\n",args);
+	if(args!=9){std::cout<<"Wrong input\n"; return -1;}
 	int n_blocks= atoi(argv[4]);
 	int n_threads=atoi(argv[5]);
 	int n_subgraph=atoi(argv[6]);
-	int Normselection=atoi(argv[7]);
-	int bitflag=atoi(argv[8]);
-	int hash=atoi(argv[9]);
-	int cache=atoi(argv[10]);
-	int bias=1;
+	int FrontierSize=atoi(argv[7]);
+	int NeighborSize=atoi(argv[8]);
 	// cout<<"\nblocks:"<<n_blocks<<"\tThreads:"<<n_threads<<"\tSubgraphs:"<<n_subgraph<<"\n";
 	//int n_threads=32; 
 	
@@ -107,10 +106,6 @@ int main(int args, char **argv)
 	int BUCKET_SIZE=125;
 	int BUCKETS=32;
 	int warps = n_blocks * T_Group;
-	
-	
-
-	
 
 	int total_mem_for_hash=n_blocks*PER_BLOCK_WARP*BUCKETS*BUCKET_SIZE;	
 	int total_mem_for_bitmap=n_blocks*PER_BLOCK_WARP*300;	
@@ -186,56 +181,12 @@ int main(int args, char **argv)
 	HRR(cudaMemcpy(sampler, &S, sizeof(Sampling), cudaMemcpyHostToDevice));
 	// shared variable for bincount and tempQ
 	double start_time,total_time;
-	int N=5;
-	int OverN=5;
 	start_time= wtime();
-	check<<<n_blocks, n_threads>>>(sampler, ggraph, d_state, n_subgraph, N, OverN, Normselection,bias, bitflag, hash, cache);
+	check<<<n_blocks, n_threads>>>(sampler, ggraph, d_state, n_subgraph, FrontierSize, NeighborSize);
 	HRR(cudaDeviceSynchronize());
 	total_time= wtime()-start_time;
 	printf("%s,SamplingTime:%.6f\n",argv[1],total_time);
+	// Copy the sampled graph to CPU
 
 
-	#ifdef SelectionProfile
-	if(selection==0){
-		printf("Select.\n");
-	for(int i=3;i<10;i+=2){
-	start_time= wtime();
-	check<<<n_blocks, n_threads>>>(sampler, ggraph, d_state, n_subgraph, i, 5, 0);
-	HRR(cudaDeviceSynchronize());
-	total_time= wtime()-start_time;
-	// HRR(cudaMemcpy(host_counter,counter,sizeof(S.Wvar), cudaMemcpyDeviceToHost));
-	printf("%d,%.6f\n",i,total_time);
-	}}
-
-	if(selection==1){
-		printf("Normalized.\n");
-	for(int i=3;i<10;i+=2){
-		// for(int j=1;j<2;j++){
-	start_time= wtime();
-	check<<<n_blocks, n_threads>>>(sampler, ggraph, d_state, n_subgraph, i, 2, 1);
-	HRR(cudaDeviceSynchronize());
-	total_time= wtime()-start_time;
-	printf(" %d,%d,%.6f\n",i,j,total_time);
-	}}
-	#endif
-	// HRR(cudaMemcpy(total,g_sub_index,sizeof(int)*n_subgraph, cudaMemcpyDeviceToHost));
-	// HRR(cudaMemcpy(host_prefix_counter,pre_counter,sizeof(int), cudaMemcpyDeviceToHost));
-	// HRR(cudaMemcpy(host_counter,counter,sizeof(int), cudaMemcpyDeviceToHost));
-	
-	
-	
-	
-	// HRR(cudaMemcpy(host_counter,counter,sizeof(int), cudaMemcpyDeviceToHost));
-	// int counted=display(n_subgraph,total);
-	// float rate = (float)(counted/cmp_time)/1000000;
-	// printf("Kernel time:%f, Rate (Million sampled edges): %f\n",cmp_time,rate);
-	// printf("%f\n",rate);
-	// printf();
-	//printf("Time to generate random %f\n",time_start-t1);
-	//printf("Total Time:%f\n",cmp_time+ (time_start-t1));
-	//r2();
-	//call cuda device sync for getting error from the kernel
-    //HRR(cudaMemcpy(a,d_a,sizeof(vertex_t)*5, cudaMemcpyDeviceToHost));
-	//cout<<a;
-	//free(total);
-}  
+}
