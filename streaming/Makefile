@@ -1,4 +1,4 @@
-exe =sampling.bin
+exe =streaming.bin
 commflags= --compiler-options -Wall -Xptxas -v -Xcudafe -\# --resource-usage 
 #commflags+=--generate-line-info --source-in-ptx 
 #commflags+=-dryrun

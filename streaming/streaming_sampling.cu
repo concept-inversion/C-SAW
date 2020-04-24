@@ -25,7 +25,7 @@ int sum(int length,int *a)
         //std::cout<<a[i]<<"\n";
 		total+=a[i];
 	}
-	std::cout<<"Total:"<< total <<"\n";	
+	// std::cout<<"Total:"<< total <<"\n";	
 	return total;
 }
 
@@ -449,10 +449,10 @@ int block_augument(int blocks, int vertex_count,index_t* beg_pos,int *beg_size_l
 
 int main(int args, char **argv)
 {
-	if(args!=6){std::cout<<"Wrong input\n"; return -1;}
-	int n_blocks= atoi(argv[3]);
-	int n_threads=atoi(argv[4]);
-	int n_subgraph=atoi(argv[5]);
+	if(args!=7){std::cout<<"Wrong input\n"; return -1;}
+	int n_blocks= atoi(argv[4]);
+	int n_threads=atoi(argv[5]);
+	int n_subgraph=atoi(argv[6]);
 	cout<<"\nblocks:"<<n_blocks<<"\tThreads:"<<n_threads<<"\tSubgraphs:"<<n_subgraph<<"\n";
 	//int n_threads=32; 
 	int *total=(int *)malloc(sizeof(int)*n_subgraph);
@@ -473,8 +473,8 @@ int main(int args, char **argv)
 	int total_queue_memory = queue_size*Graph_block*n_subgraph;
 
 	//std::cout<<"Input: ./exe beg csr nblocks nthreads\n";
-	const char *beg_file=argv[1];
-	const char *csr_file=argv[2];
+	const char *beg_file=argv[2];
+	const char *csr_file=argv[3];
 	const char *weight_file=argv[3]; // unnecessary
 	//template <file_vertex_t, file_index_t, file_weight_t
 	//new_vertex_t, new_index_t, new_weight_t>
@@ -513,7 +513,7 @@ int main(int args, char **argv)
         check,
         n_threads,
 		0);
-	cout<<"Max allocatable Blocks:"<<numBlocks<<"\n";
+	// cout<<"Max allocatable Blocks:"<<numBlocks<<"\n";
 	int *d_node_list;
     int *d_edge_list;
 	int *d_neigh_l;
@@ -549,7 +549,7 @@ int main(int args, char **argv)
 	int *h_depth_tracker=(int *)malloc(sizeof(int)*total_queue_memory);
 	std::mt19937 gen(57);
 	std::uniform_int_distribution<> dis(1, vertex_count/4);
-	printf("Here1\n");
+	
 	for(int n=0;n<n_subgraph;n++)
     {
 		int new_seed=dis(gen);
@@ -564,14 +564,14 @@ int main(int args, char **argv)
 		// printf("N_subgraph: %d, Seed:%d, Bin:%d\n",n,new_seed,bin_new);
 	}
 	/*	For streaming partition */
-	printf("Starting mem copy\n");
+	
 	HRR(cudaMemcpy(queue,seeds,sizeof(int)*total_queue_memory, cudaMemcpyHostToDevice));
 	HRR(cudaMemcpy(qstart_global,start_queue,sizeof(int)*Graph_block, cudaMemcpyHostToDevice));
 	HRR(cudaMemcpy(qstop_global,seeds_counter,sizeof(int)*Graph_block, cudaMemcpyHostToDevice));
 	HRR(cudaMemcpy(sample_id,h_sample_id,sizeof(int)*total_queue_memory, cudaMemcpyHostToDevice));
 	HRR(cudaMemcpy(depth_tracker,h_depth_tracker,sizeof(int)*total_queue_memory, cudaMemcpyHostToDevice));
 	// create three cuda streams
-	printf("Memory copied\n");
+	
 	cudaStream_t stream1, stream2, stream3, stream4;
 	cudaStreamCreate(&stream1);
 	cudaStreamCreate(&stream2);
@@ -592,7 +592,7 @@ int main(int args, char **argv)
 	for(int j=0;j<Graph_block;j++)
 		{
 			frontiers_count[j] = seeds_counter[j]-start_queue[j];
-			printf("Value: %d, j: %d,Q_count:\n",frontiers_count[j],j);
+			// printf("Value: %d, j: %d,Q_count:\n",frontiers_count[j],j);
 			if(frontiers_count[j]==0) {block_active[j]=0;}
 			else
 			{block_active[j]=1;}
@@ -600,11 +600,11 @@ int main(int args, char **argv)
 		// display(block_active,Graph_block);
 		//block[1]=1;
 		//block[2]=1;
-	printf("Start while loop.\n");
+	// printf("Start while loop.\n");
 	double time_start=wtime();
 	while(sampling_complete==false)
 	{
-		display(block_active,Graph_block);
+		// display(block_active,Graph_block);
 		if(block_active[0]){
 		H_ERR(cudaMemcpyAsync(&ggraph.adj_list[adj_size_list[block_id1]],&ginst->adj_list[adj_size_list[block_id1]],adj_size_list[block_id2]-adj_size_list[block_id1]
 			, cudaMemcpyHostToDevice,stream1));
@@ -656,11 +656,11 @@ int main(int args, char **argv)
 			if(frontiers_count[j]<=0) {block_active[j]=0;frontiers_count[j]=0;}
 			q_count+=frontiers_count[j];
 			if(max_value<frontiers_count[j]){max=j;max_value=frontiers_count[j];}
-			printf("Value: %d, j: %d,Q_count: %d, max: %d\n",frontiers_count[j],j,q_count, max);
+			// printf("Value: %d, j: %d,Q_count: %d, max: %d\n",frontiers_count[j],j,q_count, max);
 		}
 		i++;
 		block_active[max]=1;
-		printf("Value of i:%d\n",i);
+		// printf("Value of i:%d\n",i);
 		
 		
 		if(q_count==0){printf("Sampling complete;\n");sampling_complete=true;}
@@ -672,7 +672,8 @@ int main(int args, char **argv)
 	HRR(cudaMemcpy(total,g_sub_index,sizeof(int)*n_subgraph, cudaMemcpyDeviceToHost));
 	int counted=sum(n_subgraph,total);
 	float rate = (float)(counted/cmp_time)/1000000;
-	printf("Kernel time:%f, Rate (Million sampled edges): %f\n",cmp_time,rate);
+	// printf("%s,Kernel time:%f, Rate (Million sampled edges): %f\n",argv[1],cmp_time,rate);
+	printf("%s,Samples: %d, time:%f\n",argv[1],n_subgraph,cmp_time);
 	cudaDeviceReset();
 }
 
