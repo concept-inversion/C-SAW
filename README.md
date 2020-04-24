@@ -2,8 +2,8 @@ A Framework for Graph Sampling andRandom Walk on GPUs
 
 This repo contains two folders. One for streaming sampling for large graph and another for non-streaming sampling for graphs that fit in GPU memory.
 
-We use CSR format of graph for sampling. Adjacency list of most datasets are available here. We use the code below to generate CSR from adjacency list. 
-https://github.com/asherliu/graph_project_start
+We use CSR format of graph for sampling. Adjacency list of most datasets are available here.
+http://snap.stanford.edu/data/index.html
 
 Web-google dataset is included in the repo as example. 
 
