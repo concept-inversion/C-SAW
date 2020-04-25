@@ -978,7 +978,8 @@ frontier(gpu_graph *G,Sampling *S, int warpId,int SampleID, int N, int source, i
         #endif
 		S->samples[SampleID].vertex[pos]=source;
         S->samples[SampleID].edge[pos]=vertex;
-		if(is_in==0)
+        atomicAdd(&S->count.counter[0],1);
+        if(is_in==0)
 		{
             add_hash(&S->hashtable[SampleID], vertex);
             int currDepth= S->candidate.depth[sourceIndex];

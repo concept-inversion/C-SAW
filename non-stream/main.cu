@@ -77,13 +77,13 @@ check(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, int Fro
 		sourceIndex= __shfl_sync(0xffffffff,sourceIndex,0);
 		__syncwarp();
 	}
-	// if(tid==0){printf("%.2f,",(float)(S->max[0]/S->candidate.end[0]));}
+
+	if(tid==0){printf("Sampled Edges: %d,",S->count.counter[0]);}
 }
 
 
 int main(int args, char **argv)
 {
-	printf("A: %d\n",args);
 	if(args!=9){std::cout<<"Wrong input\n"; return -1;}
 	int n_blocks= atoi(argv[4]);
 	int n_threads=atoi(argv[5]);
@@ -163,6 +163,7 @@ int main(int args, char **argv)
 	// HRR(cudaMalloc((void **) &hashtable,sizeof(int)*total_mem_for_hash));
 	HRR(cudaMalloc((void **) &bitmap,sizeof(int)*total_mem_for_bitmap)); 	
 	int *seeds=(int *)malloc(sizeof(int)*n_subgraph);
+	int *Samplecount=(int *)malloc(sizeof(int)*2);
 	int *h_sample_id=(int *)malloc(sizeof(int)*n_subgraph);
 	int *h_depth_tracker=(int *)malloc(sizeof(int)*n_subgraph);
 	
@@ -185,8 +186,10 @@ int main(int args, char **argv)
 	check<<<n_blocks, n_threads>>>(sampler, ggraph, d_state, n_subgraph, FrontierSize, NeighborSize);
 	HRR(cudaDeviceSynchronize());
 	total_time= wtime()-start_time;
+	// HRR(cudaMemcpy(Samplecount,sampler->count.counter,sizeof(int)*2, cudaMemcpyDeviceToHost));
+	float rate = (float)(Samplecount[0]/total_time)/1000000;
 	printf("%s,SamplingTime:%.6f\n",argv[1],total_time);
 	// Copy the sampled graph to CPU
-
+	
 
 }
