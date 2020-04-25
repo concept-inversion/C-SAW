@@ -68,7 +68,7 @@ int binary_search(int start,int end,float value, float *arr)
     int index=start;
     while (low<=high)
     {
-	index=((low+high)/2);
+		index=((low+high)/2);
         if (value<arr[index])
 		{
             //set high to index-1
@@ -81,9 +81,9 @@ int binary_search(int start,int end,float value, float *arr)
             low = index+1;
             //printf("low:%d\n",low);
 			
-	}
+		}
         else
-        {
+        { 
             break;
         } 
     }
@@ -604,8 +604,8 @@ int main(int args, char **argv)
 	double time_start=wtime();
 	while(sampling_complete==false)
 	{
-		// display(block_active,Graph_block);
-		if(block_active[0]){
+		display(block_active,Graph_block);
+		if(1){
 		H_ERR(cudaMemcpyAsync(&ggraph.adj_list[adj_size_list[block_id1]],&ginst->adj_list[adj_size_list[block_id1]],adj_size_list[block_id2]-adj_size_list[block_id1]
 			, cudaMemcpyHostToDevice,stream1));
 		H_ERR(cudaMemcpyAsync(&ggraph.beg_pos[beg_size_list[block_id1]],&ginst->beg_pos[beg_size_list[block_id1]],beg_size_list[block_id2]-beg_size_list[block_id1]
