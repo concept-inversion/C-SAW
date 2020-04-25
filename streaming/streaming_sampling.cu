@@ -256,7 +256,7 @@ check(int Graph_block_size,int streamid,int block_id,vertex_t* adj_list, index_t
 	int queue_start_address = block_id*queue_size;
     curandState local_state=global_state[threadIdx.x];
 	curand_init(tid, 0, 0, &local_state); // sequence created with different seed and same sequence
-	if((threadIdx.x==0)&(blockIdx.x==0)) {printf("Stream:%d, Graph_block:%d, Qstart:%d, Qstop:%d \n",streamid,block_id,qstart_global[block_id],qstop_global[block_id]);}
+	if(tid==0) {printf("Stream:%d, Graph_block:%d, Qstart:%d, Qstop:%d \n",streamid,block_id,qstart_global[block_id],qstop_global[block_id]);}
 	int depth_flag=0;
 	edges_traversed = 0; 
 	// add all items to the combined queue: Number of threads must be greater than samples
@@ -604,14 +604,14 @@ int main(int args, char **argv)
 	double time_start=wtime();
 	while(sampling_complete==false)
 	{
-		// display(block_active,Graph_block);
-		if(1){
+		display(block_active,Graph_block);
+		
 		H_ERR(cudaMemcpyAsync(&ggraph.adj_list[adj_size_list[block_id1]],&ginst->adj_list[adj_size_list[block_id1]],adj_size_list[block_id2]-adj_size_list[block_id1]
 			, cudaMemcpyHostToDevice,stream1));
 		H_ERR(cudaMemcpyAsync(&ggraph.beg_pos[beg_size_list[block_id1]],&ginst->beg_pos[beg_size_list[block_id1]],beg_size_list[block_id2]-beg_size_list[block_id1]
 			, cudaMemcpyHostToDevice,stream1));
 		check<<<n_blocks/2,n_threads,0,stream1>>>(Graph_block_size,0,block_id1,ggraph.adj_list, ggraph.beg_pos, ggraph.weight_list, ggraph.vert_count,d_state,d_node_list,d_edge_list,d_neigh_l,d_degree_l,n_blocks,d_seed,n_threads,d_total,hashtable,bitmap,n_subgraph,node,queue,sample_id,depth_tracker,qstart_global,qstop_global,g_sub_index);
-		}
+		
 
 		if(block_active[1]){
 			H_ERR(cudaMemcpyAsync(&ggraph.adj_list[adj_size_list[block_id2]],&ginst->adj_list[adj_size_list[block_id2]],adj_size_list[block_id3]-adj_size_list[block_id2]
@@ -656,11 +656,11 @@ int main(int args, char **argv)
 			if(frontiers_count[j]<=0) {block_active[j]=0;frontiers_count[j]=0;}
 			q_count+=frontiers_count[j];
 			if(max_value<frontiers_count[j]){max=j;max_value=frontiers_count[j];}
-			// printf("Value: %d, j: %d,Q_count: %d, max: %d\n",frontiers_count[j],j,q_count, max);
+			printf("Value: %d, j: %d,Q_count: %d, max: %d\n",frontiers_count[j],j,q_count, max);
 		}
 		i++;
 		block_active[max]=1;
-		// printf("Value of i:%d\n",i);
+		printf("Value of i:%d\n",i);
 		
 		
 		if(q_count==0){printf("Sampling complete;\n");sampling_complete=true;}
@@ -672,8 +672,8 @@ int main(int args, char **argv)
 	HRR(cudaMemcpy(total,g_sub_index,sizeof(int)*n_subgraph, cudaMemcpyDeviceToHost));
 	int counted=sum(n_subgraph,total);
 	float rate = (float)(counted/cmp_time)/1000000;
-	// printf("%s,Kernel time:%f, Rate (Million sampled edges): %f\n",argv[1],cmp_time,rate);
-	printf("%s,Samples: %d, time:%f\n",argv[1],n_subgraph,cmp_time);
+	printf("%s,Kernel time:%f, Rate (Million sampled edges): %f\n",argv[1],cmp_time,rate);
+	// printf("%s,Samples: %d, time:%f\n",argv[1],n_subgraph,cmp_time);
 	cudaDeviceReset();
 }
 
