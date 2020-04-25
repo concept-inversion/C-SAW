@@ -604,7 +604,7 @@ int main(int args, char **argv)
 	double time_start=wtime();
 	while(sampling_complete==false)
 	{
-		display(block_active,Graph_block);
+		// display(block_active,Graph_block);
 		if(1){
 		H_ERR(cudaMemcpyAsync(&ggraph.adj_list[adj_size_list[block_id1]],&ginst->adj_list[adj_size_list[block_id1]],adj_size_list[block_id2]-adj_size_list[block_id1]
 			, cudaMemcpyHostToDevice,stream1));
