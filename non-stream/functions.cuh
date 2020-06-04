@@ -7,7 +7,7 @@
 #include <iostream>
 #include "sampler.cuh"
 #include "api.cuh"
-#define profil
+// #define profile
 __device__
 int binary_search(int start,int end,float value, float *arr)
 {
@@ -961,7 +961,7 @@ linear_duplicate(Si *samples, int vertex){
 }
 
 __device__ void
-frontier(gpu_graph *G,Sampling *S, int warpId,int SampleID, int N, int source, int sourceIndex, int hash)
+frontier(gpu_graph *G,Sampling *S, int warpId,int SampleID, int N, int source, int sourceIndex, int hash, int Depth)
 {
     int warpTID= threadIdx.x%32;
     int *selected=S->wvar[warpId].selected;
@@ -973,22 +973,24 @@ frontier(gpu_graph *G,Sampling *S, int warpId,int SampleID, int N, int source, i
         if(hash){is_in= duplicate(&S->hashtable[SampleID], vertex);}
         else{is_in= linear_duplicate(&S->samples[SampleID], vertex);}
         int pos=atomicAdd(&S->samples[SampleID].start[0],1);
+        // total count
+        atomicAdd(&S->sampled_count[0],1); 
         #ifdef profile
-        printf("SID: %d, Updated: %d, pos: %d, is_in: %d\n",SampleID,vertex,pos,is_in);
+        
+        printf("Added to sampled.\n SID: %d, Updated: %d, pos: %d, is_in: %d\n",SampleID,vertex,pos,is_in);
         #endif
 		S->samples[SampleID].vertex[pos]=source;
         S->samples[SampleID].edge[pos]=vertex;
-        atomicAdd(&S->count.counter[0],1);
-        if(is_in==0)
+		if(is_in==0)
 		{
             add_hash(&S->hashtable[SampleID], vertex);
             int currDepth= S->candidate.depth[sourceIndex];
             #ifdef profile
             // printf("currDepth: %d\n",currDepth);
             #endif 
-            if(currDepth < S->DEPTH_LIMIT){
+            if(currDepth < (Depth-1)){
                 #ifdef profile
-                printf("Added %d.\n",vertex);
+                printf("Depth: %d, Added %d to queue.\n",currDepth,vertex);
                 #endif
                 int Qid= atomicAdd(&S->candidate.end[0],1);
                 S->candidate.vertices[Qid]= vertex;

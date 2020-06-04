@@ -143,17 +143,18 @@ public:
     Co count;
     Wv wvar[2000];
     Cp cache;
-    int *max;
+    int *max,*sampled_count;
     int n_child=1;
-	int DEPTH_LIMIT=1;
+	int DEPTH_LIMIT;
 	int BUCKETS=32;
     ~Sampling(){};
-    Sampling(int edgecount,int warpCount, int qlen, int seeds, int C_len, int sampleSize){
+    Sampling(int edgecount,int warpCount, int qlen, int seeds, int C_len, int sampleSize, int depth){
+        DEPTH_LIMIT=depth;
         count=  Co(seeds);
         candidate= Cd(seeds*8000);
         cache= Cp(edgecount);
         HRR(cudaMalloc((void **) &max,sizeof(int)*2));
-        
+        HRR(cudaMalloc((void **) &sampled_count,sizeof(int)));
         for(int i=0;i<seeds;i++)
         {
             samples[i].init(sampleSize);

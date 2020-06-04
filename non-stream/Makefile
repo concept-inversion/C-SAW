@@ -24,6 +24,6 @@ $(exe):$(objs)
 
 
 test:$(exe)	
-	mpirun -n $(N) $(exe) WG WG/beg.bin WG/csr.bin 1 128 400
+	mpirun -n $(N) $(exe) WG WG/beg.bin WG/csr.bin 100 128 16000 1 1 2 1
 clean:
 	rm -rf *.o ${exe}
