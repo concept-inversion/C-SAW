@@ -1,46 +1,29 @@
-exe =streaming.bin
-commflags= --compiler-options -Wall -Xptxas -v -Xcudafe -\# --resource-usage 
-#commflags+=--generate-line-info --source-in-ptx 
-#commflags+=-dryrun
-commflags+= -std=c++11
-#commflags+=-keep -keep-dir ptx
-#commflags+=-maxrregcount=64
+exe=streaming.bin
+N=1
 cucc= "$(shell which nvcc)"
-cc= "$(shell which gcc)"
-cuflags= -arch=sm_35  $(commflags) #-Xptxas -dlcm=cg#disable l1 cache
+cc= "$(shell which mpicxx)"
+commflags=-lcudart -L"$(shell dirname $(cucc))"/../lib64
+cuflags= --compiler-options -v -Xcudafe  -\# --resource-usage 
+cuflags+= -std=c++11
+objs	= $(patsubst %.cu,%.o,$(wildcard *.cu)) \
+	$(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
-#ifeq ($(monitor), 1)
-#	cuflags+= -DENABLE_MONITORING
-#endif
-#
-#ifeq ($(check), 1)
-#	cuflags+= -DENABLE_CHECKING
-#endif
+deps	= $(wildcard ./*.cuh) \
+	$(wildcard ./*.hpp) \
+	$(wildcard ./*.h) \
 
-ifeq ($(debug), 1)
-	cuflags+= -G -g -O0
-	cflags += -g -O0
-else
-	cflags += -O3
-	cuflags+= -O3
-endif
-
-
-#cuflags+= -ccbin=g++ -Xcompiler -fopenmp
-
-objs	= $(patsubst %.cu,%.o,$(wildcard *.cu))
-
-deps	= $(wildcard ./*.h) \
-		  $(wildcard ./*.cuh) \
-		  $(wildcard ./*.hpp) \
-		  $(wildcard ./*.h) \
-		  Makefile
 
 %.o:%.cu $(deps)
-	$(cucc) -c $(cuflags) $(ldflags) $< -o $@
+	$(cucc) -c $(cuflags) $< -o $@
+
+%.o:%.cpp $(deps)
+	$(cc) -c  $< -o $@
 
 $(exe):$(objs)
-	$(cucc) $(objs) $(cuflags) -o $(exe)	
+	$(cc) $(objs) $(commflags) -O3 -o $(exe)
 
+
+test:$(exe)	
+	mpirun -n $(N) $(exe) WG WG/beg.bin WG/csr.bin 100 128 400 1 2 1
 clean:
 	rm -rf *.o ${exe}
