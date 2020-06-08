@@ -24,6 +24,8 @@ $(exe):$(objs)
 
 
 test:$(exe)	
-	mpirun -n $(N) $(exe) WG WG/beg.bin WG/csr.bin 100 128 16000 1 1 2 1
+	#Multidimensional random walk
+	mpirun -n $(N) $(exe) LJ LJ/beg.bin LJ/csr.bin 1 32 10 2000 1 2000 1
+	
 clean:
 	rm -rf *.o ${exe}

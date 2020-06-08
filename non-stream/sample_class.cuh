@@ -26,6 +26,16 @@ public:
     }
 };
  
+class Dimnesion{
+public:
+    int *pool;
+    ~Dimnesion(){};
+    Dimnesion(){};
+    void init(int FrontierSize){
+        H_ERR(cudaMalloc((void **)&pool, sizeof(int)*FrontierSize));
+    }
+};
+
 class Wv{
     /*
         Warp variables 
@@ -142,23 +152,61 @@ public:
     Ht hashtable[20100];
     Co count;
     Wv wvar[2000];
+    Dimnesion front[4000];
     Cp cache;
-    int *max,*sampled_count;
+    int *max,*sampled_count,*frontier_degree;
     int n_child=1;
 	int DEPTH_LIMIT;
 	int BUCKETS=32;
     ~Sampling(){};
-    Sampling(int edgecount,int warpCount, int qlen, int seeds, int C_len, int sampleSize, int depth){
+    Sampling(int edgecount,int warpCount, int qlen, int seeds, int C_len, int sampleSize, int FrontierSize, int depth){
         DEPTH_LIMIT=depth;
         count=  Co(seeds);
         candidate= Cd(seeds*8000);
         cache= Cp(edgecount);
         HRR(cudaMalloc((void **) &max,sizeof(int)*2));
+        HRR(cudaMalloc((void **) &frontier_degree,sizeof(int)*sampleSize*FrontierSize));
         HRR(cudaMalloc((void **) &sampled_count,sizeof(int)));
         for(int i=0;i<seeds;i++)
         {
             samples[i].init(sampleSize);
             hashtable[i].init(BUCKETS);   
+            front[i].init(FrontierSize);
+        }
+
+        for(int i=0;i<warpCount;i++)
+        {
+            // queue[i].init(qLen);
+            wvar[i].init(seeds,21000,21000,BUCKETS);
+        }
+    }
+};
+
+class Layer_sampling{
+    /*
+        Collection of objects for sampling 
+    */
+public:
+    Cd candidate;
+    Si samples[20100];
+    Co count;
+    Wv wvar[2000];
+    int *max,*sampled_count,*frontier_degree;
+    int n_child=1;
+    int DEPTH_LIMIT;
+    int BUCKETS=32;
+    ~Layer_sampling(){};
+    Layer_sampling(int edgecount,int warpCount, int qlen, int seeds, int C_len, int sampleSize, int FrontierSize, int depth){
+        DEPTH_LIMIT=depth;
+        count=  Co(seeds);
+        candidate= Cd(seeds*8000);
+        HRR(cudaMalloc((void **) &max,sizeof(int)*2));
+        HRR(cudaMalloc((void **) &frontier_degree,sizeof(int)*sampleSize*FrontierSize));
+        HRR(cudaMalloc((void **) &sampled_count,sizeof(int)));
+        for(int i=0;i<seeds;i++)
+        {
+            samples[i].init(sampleSize*FrontierSize);
+            // front[i].init(FrontierSize);
         }
 
         for(int i=0;i<warpCount;i++)

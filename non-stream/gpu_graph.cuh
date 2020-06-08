@@ -44,7 +44,11 @@ class gpu_graph
 			{
 				int neighbor= ginst->adj_list[i];
 				//cout<<"Index: "<<i<<"\tNeighbor: "<<neighbor<<"\n";
-				cpu_degree_list[i]= ginst->beg_pos[neighbor+1] - ginst->beg_pos[neighbor];  
+				cpu_degree_list[i]= ginst->beg_pos[neighbor+1] - ginst->beg_pos[neighbor];
+				if((cpu_degree_list[i]>1950) & (cpu_degree_list[i]<2050))
+				{
+					//printf("V: %d, Degree:%d\n",neighbor,cpu_degree_list[i]);
+				}
 			}
 
 			/* copy it to GPU */

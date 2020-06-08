@@ -7,7 +7,7 @@
 #include <iostream>
 #include "sampler.cuh"
 #include "api.cuh"
-// #define profile
+#define profil
 __device__
 int binary_search(int start,int end,float value, float *arr)
 {
@@ -870,7 +870,7 @@ get_neighbors(gpu_graph *graph, int vertex, Wv *wvar, int VertCount){
     int neighbor_start=graph->beg_pos[vertex];
     wvar->NS= neighbor_start;
     #ifdef profile
-    if(warpTID==0){printf("Source: %d, NLen: %d, Nstart: %d\n",vertex, len,neighbor_start);}
+    // if(warpTID==0){printf("Source: %d, NLen: %d, Nstart: %d\n",vertex, len,neighbor_start);}
     #endif
     while(index<len)
     {
@@ -963,35 +963,34 @@ linear_duplicate(Si *samples, int vertex){
 __device__ void
 frontier(gpu_graph *G,Sampling *S, int warpId,int SampleID, int N, int source, int sourceIndex, int hash, int Depth)
 {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
     int warpTID= threadIdx.x%32;
     int *selected=S->wvar[warpId].selected;
     int index=warpTID;
-    int is_in;
+    int is_in=0;
     while(index<N)
-    {
+    {   
+        // if(threadIdx.x==0){printf("Depth: %d\n",Depth);}
         int vertex= Update(G,selected[index], source);
-        if(hash){is_in= duplicate(&S->hashtable[SampleID], vertex);}
-        else{is_in= linear_duplicate(&S->samples[SampleID], vertex);}
+        // if(hash){is_in= duplicate(&S->hashtable[SampleID], vertex);}
+        // else{is_in= linear_duplicate(&S->samples[SampleID], vertex);}
         int pos=atomicAdd(&S->samples[SampleID].start[0],1);
         // total count
         atomicAdd(&S->sampled_count[0],1); 
         #ifdef profile
         
-        printf("Added to sampled.\n SID: %d, Updated: %d, pos: %d, is_in: %d\n",SampleID,vertex,pos,is_in);
+        // printf("Added to sampled.\n SID: %d, Updated: %d, pos: %d, is_in: %d\n",SampleID,vertex,pos,is_in);
         #endif
 		S->samples[SampleID].vertex[pos]=source;
         S->samples[SampleID].edge[pos]=vertex;
 		if(is_in==0)
 		{
-            add_hash(&S->hashtable[SampleID], vertex);
+            // add_hash(&S->hashtable[SampleID], vertex);
             int currDepth= S->candidate.depth[sourceIndex];
-            #ifdef profile
-            // printf("currDepth: %d\n",currDepth);
-            #endif 
             if(currDepth < (Depth-1)){
-                #ifdef profile
-                printf("Depth: %d, Added %d to queue.\n",currDepth,vertex);
-                #endif
+        // #ifdef profile
+        // printf("warpID: %d, Curr:%d, Added %d to queue.\n",tid/32,currDepth,vertex);
+        // #endif
                 int Qid= atomicAdd(&S->candidate.end[0],1);
                 S->candidate.vertices[Qid]= vertex;
                 S->candidate.instance_ID[Qid]= S->candidate.instance_ID[sourceIndex];
@@ -1000,8 +999,53 @@ frontier(gpu_graph *G,Sampling *S, int warpId,int SampleID, int N, int source, i
         }
         index+=warpSize;
     }    
+    // __syncwarp();
 }
 
+
+__device__ int
+ITS_MDRW(Wv *wvar,curandState local_state, gpu_graph *G, int neighbor_length)
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int warpID = tid/32;
+    int warpTID= threadIdx.x%32;
+    float *degree_l = wvar->degree;
+    int neighbor_start= wvar->NS;
+    int *total_counter = wvar->total_counter; 
+    int warpsize=32;
+    int prefix=0, index=0;
+    int new_neighbor;
+    clock_t start_time,stop_time;
+    float pref_time;
+    // if(source%2==0){N=N+1;}
+    // decide if prefix sum is required
+    if(neighbor_length>1) { prefix=1; }
+    if(prefix==1)
+    {
+        start_time = clock();
+        ITS(degree_l, 0, warpsize, neighbor_length);
+        #ifdef profile
+        if(threadIdx.x==0){
+            for(int i=0;i<neighbor_length;i+=1)
+            {
+                printf("%.2f,\t",degree_l[i]);
+            }
+            printf("\n");}
+        #endif
+        stop_time =clock();
+        pref_time= float(stop_time-start_time);
+        index=warpTID;
+        int selected=0;
+        float r = curand_uniform(&local_state);
+        selected= binary_search(0,neighbor_length,r,degree_l);
+        new_neighbor= G->adj_list[selected+neighbor_start];
+        __syncwarp();
+    }
+    else
+    {
+        new_neighbor = G->adj_list[neighbor_start];
+    }
+}
 
 
 #endif
