@@ -7,7 +7,7 @@
 #include <iostream>
 #include "sampler.cuh"
 #include "api.cuh"
-#define profil
+#define profile
 __device__
 int binary_search(int start,int end,float value, float *arr)
 {
@@ -205,6 +205,14 @@ write_prob(float *degree_l, float *prob, int len, int offset){
         prob[index + offset]= degree_l[index];
         index+=warpSize;
     }
+}
+
+__device__ int
+rand_integer(curandState local_state, int MAX)
+{
+    int num= curand(&local_state)%MAX;
+    // printf("Tid: %d, Rand num: %d\n",threadIdx.x, num);
+    return num;
 }
 
 __device__ void
@@ -1024,6 +1032,7 @@ ITS_MDRW(Wv *wvar,curandState local_state, gpu_graph *G, int neighbor_length)
     {
         start_time = clock();
         ITS(degree_l, 0, warpsize, neighbor_length);
+        __syncwarp();
         #ifdef profile
         if(threadIdx.x==0){
             for(int i=0;i<neighbor_length;i+=1)
@@ -1038,12 +1047,16 @@ ITS_MDRW(Wv *wvar,curandState local_state, gpu_graph *G, int neighbor_length)
         int selected=0;
         float r = curand_uniform(&local_state);
         selected= binary_search(0,neighbor_length,r,degree_l);
+        #ifdef profile
+        if(warpTID==0){printf("Random: %.2f, selected: %d\n",r,selected);}
+        #endif
         new_neighbor= G->adj_list[selected+neighbor_start];
-        __syncwarp();
+        return selected;
     }
     else
     {
-        new_neighbor = G->adj_list[neighbor_start];
+        return 0;
+        // new_neighbor = G->adj_list[neighbor_start];
     }
 }
 

@@ -126,7 +126,6 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 	// 	int vert= S->candidate.vertices[i];
 	// 	S->frontier_degree[i] = G.degree_list[source];
 	// }
-
 	while(sourceIndex < n_subgraph)
 	{
 		int curr_depth=0;
@@ -154,31 +153,40 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 				int bias = VertexBias(vert, &G);
 				S->wvar[warpId].degree[index-start_index]= (float)bias;
 				#ifdef profile
+				printf("Vert: %d, Bias: %d\n",vert,bias);
 				// printf("bias: %d,WarpID: %d, index:%d, Vert: %d, degree: %.2f\n",bias,warpId, index ,vert,S->wvar[warpId].degree[index-start_index]);
 				#endif
 			}
-			// pick one with ITS 
-			int selectedIndex= ITS_MDRW(&S->wvar[warpId], local_state, &G, FrontierSize);
-			
-			int selected = S->candidate.vertices[selectedIndex];
-			#ifdef profile
-			if(warpTid==0){printf("Random selected: %d, vertex: %d\n",selectedIndex, selected);}
-			#endif
-			int NL= G.degree_list[selected];
-			// generate one random integer with range of (0,NL);
-			int r;
-			int sample;
-			int SampleID=sourceIndex;
-			int pos=atomicAdd(&S->samples[SampleID].start[0],1);
-			S->samples[SampleID].vertex[pos]=selected;
-        	S->samples[SampleID].edge[pos]=sample;
-			if(threadIdx.x==0){atomicAdd(&S->sampled_count[0],1);}
-			// update the degree and frontier
-			S->candidate.vertices[selectedIndex] = sample; 
-			S->frontier_degree[selectedIndex] = G.degree_list[sample];
-			#ifdef profile
-			if(warpTid==0){printf("Next level. Curr Depth: %d\n",curr_depth);}
-			#endif
+			__syncwarp();
+			// pick one with ITS
+			int selectedIndex= ITS_MDRW(&S->wvar[warpId], local_state, &G, FrontierSize); 
+			if(warpTid==0){
+				int selected = S->candidate.vertices[selectedIndex];
+				#ifdef profile
+				if(warpTid==0){printf("Random selected: %d, vertex: %d\n",selectedIndex, selected);}
+				#endif
+				int NL= G.degree_list[selected];
+				if(NL==0){curr_depth+=1;continue;}
+				// generate one random integer with range of (0,NL);
+				int r=rand_integer(local_state,NL);
+				int neighbor_start= G.beg_pos[selected];
+				int sample= G.adj_list[r+neighbor_start] ;
+				#ifdef profile
+				if(warpTid==0){printf("NL: %d, New selected: %d, vertex: %d\n",NL,r, sample);}
+				#endif
+				int SampleID=sourceIndex;
+				int pos=atomicAdd(&S->samples[SampleID].start[0],1);
+				S->samples[SampleID].vertex[pos]=selected;
+				S->samples[SampleID].edge[pos]=sample;
+				if(threadIdx.x==0){atomicAdd(&S->sampled_count[0],1);}
+				// update the degree and frontier
+				S->candidate.vertices[selectedIndex] = sample; 
+				S->frontier_degree[selectedIndex] = G.degree_list[sample];
+				#ifdef profile
+				if(warpTid==0){printf("Next level. Curr Depth: %d\n",curr_depth);}
+				#endif
+			}
+			__syncwarp();
 			curr_depth+=1;
 		}
 		if(warpTid==0){
