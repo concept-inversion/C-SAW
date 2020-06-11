@@ -159,7 +159,8 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 			}
 			__syncwarp();
 			// pick one with ITS
-			int selectedIndex= ITS_MDRW(&S->wvar[warpId], local_state, &G, FrontierSize); 
+			float r = curand_uniform(&local_state);
+			int selectedIndex= ITS_MDRW(&S->wvar[warpId], local_state, &G, FrontierSize,r); 
 			if(warpTid==0){
 				int selected = S->candidate.vertices[selectedIndex];
 				#ifdef profile
@@ -178,7 +179,7 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 				int pos=atomicAdd(&S->samples[SampleID].start[0],1);
 				S->samples[SampleID].vertex[pos]=selected;
 				S->samples[SampleID].edge[pos]=sample;
-				if(threadIdx.x==0){atomicAdd(&S->sampled_count[0],1);}
+				if(warpTid==0){atomicAdd(&S->sampled_count[0],1);}
 				// update the degree and frontier
 				S->candidate.vertices[selectedIndex] = sample; 
 				S->frontier_degree[selectedIndex] = G.degree_list[sample];

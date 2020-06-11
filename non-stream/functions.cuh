@@ -1012,7 +1012,7 @@ frontier(gpu_graph *G,Sampling *S, int warpId,int SampleID, int N, int source, i
 
 
 __device__ int
-ITS_MDRW(Wv *wvar,curandState local_state, gpu_graph *G, int neighbor_length)
+ITS_MDRW(Wv *wvar,curandState local_state, gpu_graph *G, int neighbor_length, float r)
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int warpID = tid/32;
@@ -1045,7 +1045,6 @@ ITS_MDRW(Wv *wvar,curandState local_state, gpu_graph *G, int neighbor_length)
         pref_time= float(stop_time-start_time);
         index=warpTID;
         int selected=0;
-        float r = curand_uniform(&local_state);
         selected= binary_search(0,neighbor_length,r,degree_l);
         #ifdef profile
         if(warpTID==0){printf("Random: %.2f, selected: %d\n",r,selected);}
