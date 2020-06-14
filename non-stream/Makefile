@@ -1,5 +1,6 @@
 exe=streaming.bin
 N=1
+d=WG
 cucc= "$(shell which nvcc)"
 cc= "$(shell which mpicxx)"
 commflags=-lcudart -L"$(shell dirname $(cucc))"/../lib64
@@ -25,7 +26,7 @@ $(exe):$(objs)
 
 test:$(exe)	
 	#Multidimensional random walk
-	mpirun -n $(N) $(exe) LJ LJ/beg.bin LJ/csr.bin 1 32 1 20 1 10 1
+	mpirun -n $(N) $(exe) $(d) $(d)/beg.bin $(d)/csr.bin 315 32 4000 2000 1 2000 1
 	
 clean:
 	rm -rf *.o ${exe}

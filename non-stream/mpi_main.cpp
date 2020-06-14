@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     float rate = global_sampled_edges/global_max_time/1000000;
     if(myrank==0)
     {
-        printf("%s,%f,%f,%f\n",argv[1],global_min_time,global_max_time,rate);
+        printf("%s,%f,%f\n",argv[1],global_min_time,global_max_time);
     }
     MPI_Finalize();
    return 0;

@@ -136,14 +136,6 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 			int start_index = sourceIndex * FrontierSize;  
 			int end_index = (sourceIndex+1) * FrontierSize;  
 			#ifdef profile
-			// if(tid==0){
-			// 	printf("Frontiers %d.\n",FrontierSize);
-			// 	for(int i=start_index; i<end_index;i+=1)
-			// 	{
-			// 		// printf("%d,%d\t",i,S->candidate.vertices[i]);
-			// 	}
-			// 	printf("\n");
-			// } 
 			if(warpTid==0){printf("Warp: %d,SourceIdex: %d,Start: %d, End: %d\n",warpId,sourceIndex,start_index,end_index);}
 			#endif
 			int index= start_index+warpTid;
