@@ -7,7 +7,7 @@
 #include <iostream>
 #include "sampler.cuh"
 #include "api.cuh"
-#define profile
+#define profil
 __device__
 int binary_search(int start,int end,float value, float *arr)
 {

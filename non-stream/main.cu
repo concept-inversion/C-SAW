@@ -98,7 +98,7 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 	int hash=1, cache=0, bitflag=1, NORMALIZE=1;
 	int warpId = tid/32;
 
-	__syncwarp(); 
+	// __syncwarp(); 
 	
 	int warpTid=threadIdx.x%32;
     clock_t start_time,stop_time;
@@ -113,10 +113,10 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 		atomicAdd(&S->candidate.start[0],1);
 	}
 	// sourceIndex= __shfl_sync(0xffffffff,sourceIndex,0);
-	__syncwarp();
+	// __syncwarp();
 
 	#ifdef profile
-	if(threadIdx.x==0){printf("Block:%d, sourceIndex:%d, start: %d\n",blockIdx.x, sourceIndex, S->candidate.vertices[0]);}
+	// if(threadIdx.x==0){printf("Block:%d, sourceIndex:%d, start: %d\n",blockIdx.x, sourceIndex, S->candidate.vertices[0]);}
 	#endif
 	S->candidate.end[0]= n_subgraph;
 	// get degree for all frontiers
@@ -144,7 +144,7 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 			// 	}
 			// 	printf("\n");
 			// } 
-			if(warpTid==0){printf("Warp: %d,SourceIdex: %d,Start: %d, End: %d\n",warpId,S->candidate.start[0],start_index,end_index);}
+			if(warpTid==0){printf("Warp: %d,SourceIdex: %d,Start: %d, End: %d\n",warpId,sourceIndex,start_index,end_index);}
 			#endif
 			int index= start_index+warpTid;
 			for(index;index<end_index;index+=warpsize)
@@ -153,15 +153,14 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 				int bias = VertexBias(vert, &G);
 				S->wvar[warpId].degree[index-start_index]= (float)bias;
 				#ifdef profile
-				printf("Vert: %d, Bias: %d\n",vert,bias);
-				// printf("bias: %d,WarpID: %d, index:%d, Vert: %d, degree: %.2f\n",bias,warpId, index ,vert,S->wvar[warpId].degree[index-start_index]);
+				// printf("Vert: %d, Bias: %d\n",vert,bias);
 				#endif
 			}
-			__syncwarp();
+			// __syncwarp();
 			// pick one with ITS
 			float r = curand_uniform(&local_state);
 			int selectedIndex= ITS_MDRW(&S->wvar[warpId], local_state, &G, FrontierSize,r); 
-			if(warpTid==0){
+			if(threadIdx.x==0){
 				int selected = S->candidate.vertices[selectedIndex];
 				#ifdef profile
 				if(warpTid==0){printf("Random selected: %d, vertex: %d\n",selectedIndex, selected);}
@@ -187,7 +186,7 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 				if(warpTid==0){printf("Next level. Curr Depth: %d\n",curr_depth);}
 				#endif
 			}
-			__syncwarp();
+			// __syncwarp();
 			curr_depth+=1;
 		}
 		if(warpTid==0){
@@ -195,7 +194,7 @@ check_layer(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, i
 		}
 		sourceIndex= __shfl_sync(0xffffffff,sourceIndex,0);
 		// if(warpTid==0){printf("Next source. %d\n",sourceIndex);}
-		__syncwarp();
+		// __syncwarp();
 	}
 	if(tid==0){printf("%d,",S->sampled_count[0]);}
 }
