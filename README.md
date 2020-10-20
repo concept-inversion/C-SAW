@@ -1,6 +1,11 @@
-A Framework for Graph Sampling andRandom Walk on GPUs
+![C-SAW Logo](/images/C-SAW1_modified.png)
 
-This repo contains two folders. One for streaming sampling for large graph and another for non-streaming sampling for graphs that fit in GPU memory.
+
+C-SAW: A Framework for Graph Sampling and Random Walk on GPUs
+This framework can be used to implement variants of graph sampling and random walk algorithms. For more details, please refer to our [paper](https://arxiv.org/abs/2009.09103). 
+
+This repo contains two folders. One for streaming sampling for large graph and another for non-streaming sampling for graphs that fit in GPU memory. 
+
 
 We use CSR format of graph for sampling. Adjacency list of most datasets are available here.
 http://snap.stanford.edu/data/index.html
