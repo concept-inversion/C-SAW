@@ -1,7 +1,7 @@
 <p align="center">
   <a href="https://github.com/concept-inversion/C-SAW"><img src="/images/C-SAW1_modified.png"></a>
   <br>
-<\p>
+</p>
 C-SAW: A Framework for Graph Sampling and Random Walk on GPUs
 This framework can be used to implement variants of graph sampling and random walk algorithms. For more details, please refer to our [paper](https://arxiv.org/abs/2009.09103). 
 
