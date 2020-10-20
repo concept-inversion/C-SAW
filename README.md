@@ -1,6 +1,5 @@
 <p align="center">
   <a href="https://github.com/concept-inversion/C-SAW"><img src="/images/C-SAW1_modified.png"></a>
-  <br>
 </p>
 C-SAW: A Framework for Graph Sampling and Random Walk on GPUs
 This framework can be used to implement variants of graph sampling and random walk algorithms. For more details, please refer to our [paper](https://arxiv.org/abs/2009.09103). 
@@ -8,10 +7,12 @@ This framework can be used to implement variants of graph sampling and random wa
 This repo contains two folders. One for streaming sampling for large graph and another for non-streaming sampling for graphs that fit in GPU memory. 
 
 
-We use CSR format of graph for sampling. Adjacency list of most datasets are available here.
+C-SAW uses CSR format of graph for sampling. Web-google dataset is included in the repo as example. Adjacency list of most datasets are available here.
 http://snap.stanford.edu/data/index.html
+The adjacency list can be converted into CSR using this library:
+https://github.com/asherliu/graph_project_start
 
-Web-google dataset is included in the repo as example. 
+
 
 Generate the CSR and put the folder in main directory of both non-streaming and streaming sampling.
 
