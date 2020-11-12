@@ -34,7 +34,10 @@ To run:
 For changing the depth of the sampling or length of the random walk, update the DEPTH_LIMIT within Sampling class in sampler.cuh at non-stream folder. You can also change the memory allocation and other paramters with the Sampling class.
 
 For more details, please refer to our [paper](https://arxiv.org/abs/2009.09103).
+
 Citation:
+
+```
 @INPROCEEDINGS {,
 author = {S. Pandey and L. Li and A. Hoisie and X. Li and H. Liu},
 booktitle = {2020 SC20: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)},
@@ -50,4 +53,4 @@ publisher = {IEEE Computer Society},
 address = {Los Alamitos, CA, USA},
 month = {nov}
 }
-
+```
