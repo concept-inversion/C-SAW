@@ -1,4 +1,4 @@
-exe=streaming.bin
+exe=sampling.bin
 N=1
 d=WG
 cucc= "$(shell which nvcc)"

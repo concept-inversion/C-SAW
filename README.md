@@ -29,9 +29,15 @@ To run:
     
     Step 3: Update the dataset name in the run.sh file.
 
-    Step 4: ./run.sh <Sample Size> <FrontierSize> <NeighborSize> 
+    Step 4: ./run.sh <Sample Size> <FrontierSize> <NeighborSize> <Length of walk> <nGPUs> 
 
-For changing the depth of the sampling or length of the random walk, update the DEPTH_LIMIT within Sampling class in sampler.cuh at non-stream folder. You can also change the memory allocation and other paramters with the Sampling class.
+For changing the depth of the sampling or length of the random walk, update the DEPTH_LIMIT within Sampling class in sample_class.cuh at non-stream folder. You can also change the memory allocation and other paramters with the Sampling class.
+
+The sampled graph is stored as edge list in the GPU memory as a class variable Si found in sample_class.cuh. The output format:
+<Edges sampled>, <dataset name>, <min-time>, <max-time>
+
+<min-time> and <max-time> is same for single GPU. SEPS can be computed as <Edges sampled>/<max-time>.
+
 
 For more details, please refer to our [paper](https://arxiv.org/abs/2009.09103).
 

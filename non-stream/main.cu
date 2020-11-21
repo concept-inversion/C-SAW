@@ -294,6 +294,9 @@ struct arguments Sampler(char beg[100], char csr[100],int n_blocks, int n_thread
 	total_time= wtime()-start_time;
 	// printf("%s,SamplingTime:%.6f\n",argv[1],total_time);
 	// Copy the sampled graph to CPU
+	/*
+	 	The sampled graph is stored as edge list. To get the samples in the CPU memory, copy each array from class Si to CPU allocated memory.
+	 */
 	// printf("Sampled edges:%d\n",host_counter[0]);	
 	// args.sampled_edges=host_counter[0];
 	args.time=total_time; 
