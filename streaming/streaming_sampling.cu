@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "herror.h"
-#include "sampler.cuh"
+#include "Sampler.cuh"
 #include <math.h>
 #include <curand.h>
 #include <curand_kernel.h>
@@ -447,6 +447,7 @@ int block_augument(int blocks, int vertex_count,index_t* beg_pos,int *beg_size_l
 		int start_adj = beg_pos[block_size*i];
 		adj_size_list[i]= start_adj;
 	}
+	return 0;
 }
 
 struct arguments Sampler(char beg[100], char csr[100],int n_blocks, int n_threads, int n_subgraph, int frontier_size, int neighbor_size, struct arguments args, int rank)
