@@ -450,7 +450,7 @@ int block_augument(int blocks, int vertex_count,index_t* beg_pos,int *beg_size_l
 	return 0;
 }
 
-struct arguments Sampler(char beg[100], char csr[100],int n_blocks, int n_threads, int n_subgraph, int frontier_size, int neighbor_size, struct arguments args, int rank)
+struct arguments Sampler(char beg[100], char csr[100],int n_blocks, int n_threads, int n_subgraph, int frontier_size, int neighbor_size, int depth,struct arguments args, int rank)
 {
 	// if(args!=7){std::cout<<"Wrong input\n"; return -1;}
 
@@ -459,7 +459,6 @@ struct arguments Sampler(char beg[100], char csr[100],int n_blocks, int n_thread
 	int *total=(int *)malloc(sizeof(int)*n_subgraph);
 	int len=5;
 	int T_Group=n_threads/32;
-	int depth=10;	
    	int n_child=1500;
    	int each_subgraph=depth*n_child;
     int total_length=each_subgraph*n_subgraph;
