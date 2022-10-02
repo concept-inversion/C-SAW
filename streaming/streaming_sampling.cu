@@ -247,7 +247,7 @@ __global__ void check(int Graph_block_size, int streamid, int block_id,
 
     while (q_start < qstop_global[block_id]) {
       vertex = queue[q_start + queue_start_address];
-      if(warp_tid==0){printf("Block_id:%d, StreamId: %d, G_warpID: %d,SampleID:%d, vertex:%d, q_stop:%d,q_start:%d,depth:%d\n",block_id,streamid,G_warpID,sample_id[q_start+queue_start_address],vertex,qstop_global[block_id],q_start,depth_tracker[q_start+queue_start_address]);}
+      //if(warp_tid==0){printf("Block_id:%d, StreamId: %d, G_warpID: %d,SampleID:%d, vertex:%d, q_stop:%d,q_start:%d,depth:%d\n",block_id,streamid,G_warpID,sample_id[q_start+queue_start_address],vertex,qstop_global[block_id],q_start,depth_tracker[q_start+queue_start_address]);}
       int neighbor_start = beg_pos[vertex];
       int neighbor_end = beg_pos[vertex + 1];
       int neighbor_length = neighbor_end - neighbor_start;
@@ -353,7 +353,7 @@ __global__ void check(int Graph_block_size, int streamid, int block_id,
         int g_to = atomicAdd(&g_sub_index[sample_id[q_start]], 1);
         //g_node_list[g_to + g_sub_start] = vertex;
         //g_edge_list[g_to + g_sub_start] = new_neighbor;
-        printf("%d,%d,%d,%d\n",vertex,new_neighbor,sample_id[q_start],depth_tracker);
+        printf("%d,%d,%d,%d\n",vertex,new_neighbor,sample_id[q_start],depth_tracker[q_start + queue_start_address]);
 	//Added to sample:752601,328138,20,0,2
 	// add to the expand queue
         if (depth_tracker[q_start] < depth_limit) {
@@ -367,7 +367,7 @@ __global__ void check(int Graph_block_size, int streamid, int block_id,
               sample_id[q_start + queue_start_address];
           depth_tracker[to + new_queue_start] =
               depth_tracker[q_start + queue_start_address] + 1;
-         printf("Added: %d,  to queue at index %d and block %d, local_index: %d, offset: %d, new_d: %d, prev_d: %d\n",new_neighbor,to + new_queue_start,new_bin, to, new_queue_start,depth_tracker[to + new_queue_start], depth_tracker[q_start + queue_start_address]);
+         //printf("Added: %d,  to queue at index %d and block %d, local_index: %d, offset: %d, new_d: %d, prev_d: %d\n",new_neighbor,to + new_queue_start,new_bin, to, new_queue_start,depth_tracker[to + new_queue_start], depth_tracker[q_start + queue_start_address]);
 	 }
       }
       // q_start+=1;
@@ -461,12 +461,14 @@ struct arguments Sampler(char beg[100], char csr[100], int n_blocks,
   int edge_count = ginst->edge_count;
   int Graph_block_size = vertex_count / Graph_block;
   // int Graph_block_size=2000;
+  /*
   printf("Size of blocks\n");
   for (int i = 0; i < 4; i++) {
     printf("%d,%d\n", i,
            ginst->beg_pos[(i + 1) * Graph_block_size] -
                ginst->beg_pos[(i)*Graph_block_size]);
   }
+  */
   curandState *d_state;
   cudaMalloc(&d_state, sizeof(curandState));
   gpu_graph ggraph(ginst);
@@ -586,6 +588,7 @@ struct arguments Sampler(char beg[100], char csr[100], int n_blocks,
       block_active[j] = 1;
     }
   }
+  printf("<Sampled edges in csv format.>\nsource, destination, sample_id, depth\n");
   // display(block_active,Graph_block);
   // block[1]=1;
   // block[2]=1;
@@ -692,12 +695,12 @@ struct arguments Sampler(char beg[100], char csr[100], int n_blocks,
         max = j;
         max_value = frontiers_count[j];
       }
-      printf("Value: %d, j: %d,Q_count: %d, max: %d\n", frontiers_count[j], j,
-             q_count, max);
+      //printf("Value: %d, j: %d,Q_count: %d, max: %d\n", frontiers_count[j], j,
+      //       q_count, max);
     }
     i++;
     block_active[max] = 1;
-    printf("Value of i:%d\n", i);
+    //printf("Value of i:%d\n", i);
 
     if (q_count == 0) {  // printf("Sampling complete;\n");
       sampling_complete = true;
@@ -718,6 +721,7 @@ struct arguments Sampler(char beg[100], char csr[100], int n_blocks,
   // printf("%s,Kernel time:%f, Rate (Million sampled edges):
   // %f\n",argv[1],cmp_time,rate); printf("%s,Samples: %d,
   // time:%f\n",argv[1],n_subgraph,cmp_time);
+  printf("<End of edge list>\n");
   args.sampled_edges = counted;
   args.time = cmp_time;
   return args;
