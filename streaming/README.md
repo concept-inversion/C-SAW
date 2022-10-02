@@ -15,4 +15,5 @@ or
 
 
 ##### Note:
-The current source code only supports dividing the graph into four partition and streams two partitions into GPU. The dynamic version may be uploaded later. Memory allocation (espically for storing the samples and queue) may require higher allocation depending on the sampling parameters.
+The current source code only supports dividing the graph into four partition and streams two partitions into GPU. The dynamic version may be uploaded later. Memory allocation (espically for storing the samples and queue) may require higher allocation depending on the sampling parameters. 
+Note, current version of this code works only with a single GPU. 
