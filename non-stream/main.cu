@@ -55,6 +55,8 @@ check(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, int Fro
 	// start loop
 	S->candidate.end[0]= n_subgraph;
 	// clock_t start = clock();
+
+	// Subgraph number should be higher than the number of warps assigned 
 	while(sourceIndex < S->candidate.end[0])
 	{
 		int VertCount=1;
@@ -64,7 +66,7 @@ check(Sampling *S, gpu_graph G,curandState *global_state,int n_subgraph, int Fro
 		#ifdef profile
 		// if(warpTid==0){printf(" Source: %d, len: %d\n",source,NL);}
 		#endif
-		if((NL==0) || (NL>8000)){	
+		if((NL==0)){ // Skip empty vertices	
 			if(warpTid==0){sourceIndex=atomicAdd(&S->candidate.start[0],1);}
 			sourceIndex= __shfl_sync(0xffffffff,sourceIndex,0);
 			__syncwarp();
@@ -248,6 +250,7 @@ struct arguments Sampler(char beg[100], char csr[100],int n_blocks, int n_thread
 	// printf("My rank: %d, totaldevice: %d\n", rank,deviceCount);
 	// HRR(cudaSetDevice(rank%deviceCount));
 	Sampling *sampler;
+	// Subgraph number should be higher than the number of warps assigned 
 	Sampling S(ginst->edge_count, warps, 10000,n_subgraph, BUCKETS*BUCKET_SIZE, Depth*NeighborSize, FrontierSize, Depth);
 	H_ERR(cudaMalloc((void **)&sampler, sizeof(Sampling)));
 
@@ -276,6 +279,7 @@ struct arguments Sampler(char beg[100], char csr[100],int n_blocks, int n_thread
 	double start_time,total_time;
 	start_time= wtime();
 	if(FrontierSize==1){
+		// Subgraph number should be higher than the number of warps assigned 
 	check<<<n_blocks, n_threads>>>(sampler, ggraph, d_state, n_subgraph, FrontierSize, NeighborSize, Depth);
 	}
 	else{

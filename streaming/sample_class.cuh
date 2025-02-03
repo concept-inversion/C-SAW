@@ -113,11 +113,12 @@ class Co{
     */
 public:
     int *counter, *pre_counter, *total, *colcount, *max;
+    int max_NL=90000; // Update this to dynamic allocation 
     ~Co(){};
     Co(){};
     Co(int total){
         HRR(cudaMalloc((void **) &counter,sizeof(int)*2));
-        HRR(cudaMalloc((void **) &max,sizeof(int)*8000));
+        HRR(cudaMalloc((void **) &max,sizeof(int)*max_NL));
         HRR(cudaMalloc((void **) &pre_counter,sizeof(int)*2));
         HRR(cudaMalloc((void **) &colcount,sizeof(int)*50));
         HRR(cudaMalloc((void **) &total,sizeof(int)*total));
@@ -158,11 +159,12 @@ public:
     int n_child=1;
 	int DEPTH_LIMIT;
 	int BUCKETS=32;
+    int max_NL=90000; // Update this to dynamic allocation 
     ~Sampling(){};
     Sampling(int edgecount,int warpCount, int qlen, int seeds, int C_len, int sampleSize, int FrontierSize, int depth){
         DEPTH_LIMIT=depth;
         count=  Co(seeds);
-        candidate= Cd(seeds*8000);
+        candidate= Cd(seeds*max_NL);
         cache= Cp(edgecount);
         HRR(cudaMalloc((void **) &max,sizeof(int)*2));
         HRR(cudaMalloc((void **) &frontier_degree,sizeof(int)*sampleSize*FrontierSize));
@@ -195,11 +197,12 @@ public:
     int n_child=1;
     int DEPTH_LIMIT;
     int BUCKETS=32;
+    int max_NL=90000; // Update this to dynamic allocation 
     ~Layer_sampling(){};
     Layer_sampling(int edgecount,int warpCount, int qlen, int seeds, int C_len, int sampleSize, int FrontierSize, int depth){
         DEPTH_LIMIT=depth;
         count=  Co(seeds);
-        candidate= Cd(seeds*8000);
+        candidate= Cd(seeds*max_NL);
         HRR(cudaMalloc((void **) &max,sizeof(int)*2));
         HRR(cudaMalloc((void **) &frontier_degree,sizeof(int)*sampleSize*FrontierSize));
         HRR(cudaMalloc((void **) &sampled_count,sizeof(int)));
